@@ -682,7 +682,7 @@ async function runJohnDetail(id) {
   document.getElementById('john-detail-out').innerHTML = '<div class="flex items-center gap-8"><div class="spinner"></div><span class="text-sm text-muted">Agent John is analysing...</span></div>';
   const docID = t.supportDocument?.[0]?.supportDocumentID || null;
   const docName = t.supportDocument?.[0]?.fileName || null;
-  const text = await callAgentJohn(t.name, t.entity, t.sector, t.value, t.score, recFromScore(t.score).label, '', docID, docName);
+  const text = await callAgentJohn(t.name, t.entity, t.sector, t.value, t.score, recFromScore(t.score).label, '', docID, docName, t);
   document.getElementById('john-detail-out').innerHTML = `<div class="john-box">${formatAI(text)}</div>`;
 }
 
@@ -893,7 +893,7 @@ function wireEval() {
 }
 
 // ── Agent John ────────────────────────────────────────────────
-async function callAgentJohn(name, entity, sector, value, score, recLabel, breakdown, supportDocumentID, fileName) {
+async function callAgentJohn(name, entity, sector, value, score, recLabel, breakdown, supportDocumentID, fileName, tenderObj) {
   try {
     const r = await fetch('/api/agent-john', {
       method: 'POST',
@@ -903,7 +903,7 @@ async function callAgentJohn(name, entity, sector, value, score, recLabel, break
         fileName: fileName || null,
         messages: [{
           role: 'user',
-          content: `Tender: ${name||'Unnamed'}\nEntity: ${entity||'Unknown'}\nSector: ${sector||'General'}\nValue: R${value||'unknown'}\nBid score: ${score}/100 — ${recLabel}${breakdown?'\nCriteria: '+breakdown:''}\n\nGive your strategic assessment.`
+          content: `TENDER METADATA:\nTender: ${name||'Unnamed'}\nReference: ${tenderObj?.ref||''}\nEntity: ${entity||'Unknown'}\nProvince: ${tenderObj?.province||''}\nSector: ${sector||'General'}\nValue: R${value||'unknown'}\nDeadline: ${tenderObj?.deadline||'Not stated'}\nSubmission: ${tenderObj?.eSubmission?'eSubmission':'Physical'}\nCompulsory Briefing: ${tenderObj?.compulsoryBriefing?'YES':'No'}\nBriefing Date: ${tenderObj?.briefingDate||'N/A'}\nBriefing Venue: ${tenderObj?.briefingVenue||'N/A'}\nBid score: ${score}/100 — ${recLabel}${breakdown?'\nCriteria: '+breakdown:''}\n\nAnalyse this tender thoroughly.`
         }]
       })
     });

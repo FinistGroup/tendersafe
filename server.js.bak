@@ -1,0 +1,86 @@
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+require('dotenv').config();
+
+const app = express();
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+const DB = path.join(__dirname, 'data', 'tenders.json');
+
+function readDB() {
+  try { return JSON.parse(fs.readFileSync(DB, 'utf8')); }
+  catch { return { tenders: [] }; }
+}
+
+function writeDB(data) {
+  fs.writeFileSync(DB, JSON.stringify(data, null, 2));
+}
+
+// ── Tenders CRUD ──────────────────────────────────────────────
+app.get('/api/tenders', (req, res) => {
+  res.json(readDB());
+});
+
+app.post('/api/tenders', (req, res) => {
+  const db = readDB();
+  const t = {
+    ...req.body,
+    id: Date.now(),
+    added: new Date().toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })
+  };
+  db.tenders.push(t);
+  writeDB(db);
+  res.json(t);
+});
+
+app.patch('/api/tenders/:id', (req, res) => {
+  const db = readDB();
+  const i = db.tenders.findIndex(t => String(t.id) === req.params.id);
+  if (i === -1) return res.status(404).json({ error: 'Not found' });
+  db.tenders[i] = { ...db.tenders[i], ...req.body };
+  writeDB(db);
+  res.json(db.tenders[i]);
+});
+
+app.delete('/api/tenders/:id', (req, res) => {
+  const db = readDB();
+  db.tenders = db.tenders.filter(t => String(t.id) !== req.params.id);
+  writeDB(db);
+  res.json({ ok: true });
+});
+
+// ── Agent John (Anthropic proxy) ──────────────────────────────
+app.post('/api/agent-john', async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set in .env' });
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 900,
+        system: `You are Agent John, TenderSafe's AI bid strategist for South African government tenders. Direct, sharp, specific — no filler. Respond with exactly four sections using **LABEL**: format: **VERDICT** (one sentence), **KEY RISKS** (2–3 bullets), **POSITIONING MOVES** (2–3 concrete actions), **NEXT 48 HOURS** (the single most important action right now).`,
+        messages: req.body.messages
+      })
+    });
+    const data = await r.json();
+    console.log('Anthropic response:', JSON.stringify(data).slice(0, 200));
+    res.json(data);
+  } catch (err) {
+    console.error('Agent John error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`\n  TenderSafe is running\n  → http://localhost:${PORT}\n`);
+});

@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TenderSafe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0d1b2a;
+    --navy-light: #162232;
+    --navy-border: #1e2f42;
+    --green: #16a34a;
+    --green-dim: #14532d;
+    --amber: #d97706;
+    --amber-dim: #78350f;
+    --red: #dc2626;
+    --red-dim: #7f1d1d;
+    --blue: #2563eb;
+    --blue-dim: #1e3a8a;
+    --purple: #7c3aed;
+    --surface: #ffffff;
+    --bg: #f4f5f0;
+    --text: #0d1b2a;
+    --text-2: #4b5563;
+    --text-3: #9ca3af;
+    --border: #e5e7eb;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── Sidebar ── */
+  aside {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--navy);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+  }
+
+  .logo {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--navy-border);
+    margin-bottom: 16px;
+  }
+  .logo-name { font-size: 18px; font-weight: 600; color: #fff; letter-spacing: -.4px; }
+  .logo-name span { color: #16a34a; }
+  .logo-tag { font-size: 11px; color: #6b7280; margin-top: 2px; font-family: 'DM Mono', monospace; }
+
+  nav a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px;
+    color: #6b7280; font-size: 13px; font-weight: 500;
+    text-decoration: none; cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all .15s;
+  }
+  nav a:hover { color: #d1d5db; background: rgba(255,255,255,.04); }
+  nav a.active { color: #fff; border-left-color: #16a34a; background: rgba(22,163,74,.1); }
+  nav a .icon { width: 16px; height: 16px; opacity: .7; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid var(--navy-border);
+    font-size: 11px;
+    color: #374151;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── Main ── */
+  main {
+    margin-left: 220px;
+    flex: 1;
+    padding: 28px 32px;
+    max-width: 1100px;
+  }
+
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .page-title { font-size: 20px; font-weight: 600; }
+  .page-sub { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+
+  /* ── KPI Grid ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .kpi-label { font-size: 11px; color: var(--text-3); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .kpi-value { font-size: 24px; font-weight: 600; color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .kpi-sub { font-size: 12px; color: var(--text-2); }
+
+  /* ── Two col layout ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .6px; color: var(--text-3);
+    margin-bottom: 14px;
+  }
+
+  /* ── Tender pills ── */
+  .t-pill {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 11px;
+    margin-bottom: 7px;
+    cursor: pointer;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .t-pill:hover { border-color: #9ca3af; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .t-pill:last-child { margin-bottom: 0; }
+  .t-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
+  .t-meta { display: flex; align-items: center; justify-content: space-between; }
+  .t-val { font-size: 11px; color: var(--text-3); font-family: 'DM Mono', monospace; }
+
+  /* ── Badges ── */
+  .badge {
+    font-size: 10px; font-weight: 600; padding: 2px 7px;
+    border-radius: 20px; text-transform: uppercase; letter-spacing: .3px;
+  }
+  .b-evaluating { background: #dbeafe; color: #1d4ed8; }
+  .b-bidding     { background: #fef3c7; color: #92400e; }
+  .b-submitted   { background: #ede9fe; color: #5b21b6; }
+  .b-won         { background: #dcfce7; color: #15803d; }
+  .b-no-bid      { background: #fee2e2; color: #b91c1c; }
+
+  /* ── Score bar ── */
+  .score-bar-wrap { background: #f3f4f6; border-radius: 3px; height: 5px; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 3px; transition: width .5s ease; }
+  .sb-strong { background: #16a34a; }
+  .sb-cond   { background: #d97706; }
+  .sb-nobid  { background: #dc2626; }
+
+  /* ── Probability matrix ── */
+  .mx-wrap { display: grid; grid-template-columns: 52px 1fr 1fr; gap: 0; }
+  .mx-col-head { font-size: 11px; font-weight: 600; color: var(--text-2); text-align: center; padding-bottom: 8px; }
+  .mx-row-label { font-size: 10px; color: var(--text-3); font-weight: 500; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; }
+  .mx-cell {
+    border: 1px solid var(--border);
+    padding: 8px;
+    min-height: 72px;
+  }
+  .mx-cell:nth-child(1) { border-radius: var(--radius-sm) 0 0 0; }
+  .mx-cell:nth-child(2) { border-radius: 0 var(--radius-sm) 0 0; }
+  .mx-cell:nth-child(3) { border-radius: 0 0 0 var(--radius-sm); border-top: none; }
+  .mx-cell:nth-child(4) { border-radius: 0 0 var(--radius-sm) 0; border-top: none; }
+  .mx-cell:nth-child(2), .mx-cell:nth-child(4) { border-left: none; }
+
+  .mx-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 500;
+    padding: 3px 8px; border-radius: 20px;
+    margin: 2px; cursor: pointer;
+    transition: opacity .15s;
+  }
+  .mx-chip:hover { opacity: .8; }
+  .mx-high { background: #dcfce7; color: #15803d; }
+  .mx-low  { background: #fee2e2; color: #b91c1c; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text);
+    transition: all .15s;
+  }
+  .btn:hover { background: #f9fafb; border-color: #9ca3af; }
+  .btn-primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .btn-primary:hover { background: #162232; }
+  .btn-green { background: #16a34a; color: #fff; border-color: #16a34a; }
+  .btn-green:hover { background: #15803d; }
+  .btn-danger { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-full { width: 100%; justify-content: center; }
+
+  /* ── Forms ── */
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 4px; }
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    width: 100%; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text);
+    background: var(--surface);
+    transition: border-color .15s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: #6b7280; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── Evaluation progress ── */
+  .ev-prog { display: flex; align-items: center; gap: 4px; margin-bottom: 20px; }
+  .ev-dot { width: 8px; height: 8px; border-radius: 50%; background: #e5e7eb; transition: background .2s; }
+  .ev-dot.active { background: var(--navy); }
+  .ev-dot.done { background: #9ca3af; }
+  .ev-label { font-size: 11px; color: var(--text-3); margin-right: 10px; }
+  .ev-label.active { color: var(--text); font-weight: 500; }
+
+  /* ── Range sliders ── */
+  .sl-row { display: flex; align-items: center; gap: 10px; }
+  .sl-row input[type=range] { flex: 1; accent-color: var(--navy); }
+  .sl-hint { font-size: 10px; color: var(--text-3); width: 80px; line-height: 1.3; }
+  .sl-hint.right { text-align: right; }
+  .sl-num { font-size: 13px; font-weight: 600; min-width: 18px; text-align: center; font-family: 'DM Mono', monospace; }
+
+  /* ── Y/N buttons ── */
+  .yn-group { display: flex; gap: 8px; }
+  .yn-btn {
+    padding: 5px 18px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--surface);
+    font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    color: var(--text-2); transition: all .15s;
+  }
+  .yn-btn.yes { background: #dcfce7; color: #15803d; border-color: #86efac; }
+  .yn-btn.no  { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+
+  /* ── Agent John ── */
+  .john-box {
+    background: #f8fafc; border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px;
+    font-size: 13px; line-height: 1.75; color: var(--text);
+    white-space: pre-wrap;
+  }
+  .john-box strong { font-weight: 600; color: var(--navy); }
+  .john-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--navy); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; flex-shrink: 0;
+  }
+
+  /* ── Score summary ── */
+  .score-big { font-size: 48px; font-weight: 700; line-height: 1; font-family: 'DM Mono', monospace; }
+
+  /* ── Dividers ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+  /* ── Alert ── */
+  .alert { border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 12px; }
+  .alert-danger { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+  .alert-success { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+  .alert-warn { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+
+  /* ── Empty state ── */
+  .empty { font-size: 12px; color: var(--text-3); padding: 8px 0; }
+
+  /* ── Activity ── */
+  .act-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-size: 12px; }
+  .act-row:last-child { margin-bottom: 0; }
+  .act-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+
+  /* ── Detail view ── */
+  .detail-header { margin-bottom: 20px; }
+  .detail-title { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .detail-meta { font-size: 13px; color: var(--text-2); }
+
+  /* ── Status selector ── */
+  .status-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  /* ── Spinner ── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+
+  /* ── Util ── */
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .mb-4 { margin-bottom: 4px; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+  .ml-auto { margin-left: auto; }
+  .text-sm { font-size: 12px; }
+  .text-xs { font-size: 11px; }
+  .text-muted { color: var(--text-3); }
+  .mono { font-family: 'DM Mono', monospace; }
+  .fw-5 { font-weight: 500; }
+  .fw-6 { font-weight: 600; }
+  .hidden { display: none !important; }
+
+  #view-dash, #view-eval, #view-detail, #view-import { display: none; }
+  #view-dash.show, #view-eval.show, #view-detail.show, #view-import.show { display: block; }
+  /* ── eTenders import ── */
+  .et-keywords { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .et-kw { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); font-size: 12px; font-weight: 500; cursor: pointer; color: var(--text-2); transition: all .15s; }
+  .et-kw.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .et-prov-chip { padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); font-size: 11px; cursor: pointer; color: var(--text-2); transition: all .15s; }
+  .et-prov-chip.active { background: #dcfce7; color: #15803d; border-color: #86efac; }
+  .et-result { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; background: var(--surface); }
+  .et-result-body { flex: 1; min-width: 0; }
+  .et-result-name { font-size: 13px; font-weight: 500; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .et-result-meta { font-size: 11px; color: var(--text-3); }
+  .et-score { font-size: 13px; font-weight: 600; min-width: 36px; text-align: center; }
+  .imported-tag { font-size: 11px; color: #15803d; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside>
+  <div class="logo">
+    <div class="logo-name">Tender<span>Safe</span></div>
+    <div class="logo-tag">v1.0 · AI-powered</div>
+  </div>
+  <nav>
+    <a class="active" data-view="dash" onclick="showView('dash')">
+      <svg class="icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".7"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".7"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/></svg>
+      Dashboard
+    </a>
+    <a data-view="import" onclick="showView('import')">
+      <svg class="icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="5" x2="8" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Import tenders
+    </a>
+    <a data-view="eval" onclick="showView('eval')">
+      <svg class="icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="5" x2="8" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11" r=".8" fill="currentColor"/></svg>
+      Evaluate tender
+    </a>
+  </nav>
+  <div class="sidebar-footer">TenderSafe · 2026</div>
+</aside>
+
+<!-- Main -->
+<main>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="view-dash" class="show">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Your tender intelligence machine</div>
+      </div>
+      <button class="btn btn-primary" onclick="showView('eval')">+ Evaluate tender</button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <!-- Pipeline + Matrix -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Monthly pipeline</div>
+        <div id="pipeline-months"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Probability matrix</div>
+        <div id="matrix-wrap"></div>
+      </div>
+    </div>
+
+    <!-- Activity -->
+    <div class="card">
+      <div class="card-title">Recent activity</div>
+      <div id="activity-feed"></div>
+    </div>
+  </div>
+
+  <!-- ── IMPORT FROM ETENDERS ── -->
+  <div id="view-import">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Import from eTenders</div>
+        <div class="page-sub">Live feed from National Treasury — insurance brokerage, tech &amp; AI</div>
+      </div>
+      <button class="btn" onclick="showView('dash')">← Dashboard</button>
+    </div>
+    <div id="import-content"></div>
+  </div>
+
+  <!-- ── EVALUATE ── -->
+  <div id="view-eval">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Evaluate a tender</div>
+        <div class="page-sub">Run the bid/no-bid engine</div>
+      </div>
+      <button class="btn" onclick="showView('dash')">← Dashboard</button>
+    </div>
+    <div id="eval-content"></div>
+  </div>
+
+  <!-- ── DETAIL ── -->
+  <div id="view-detail">
+    <div class="page-header">
+      <div>
+        <div class="page-title" id="detail-title-h"></div>
+        <div class="page-sub" id="detail-meta-h"></div>
+      </div>
+      <button class="btn" onclick="showView('dash')">← Dashboard</button>
+    </div>
+    <div id="detail-content"></div>
+  </div>
+
+</main>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────
+const MONTHS = ['March','April','May'];
+const SECTORS = ['Insurance','Tech','Construction','Training','Other'];
+const STATUSES = ['evaluating','bidding','submitted','won','no-bid'];
+const CRITERIA = [
+  {id:'rel',  label:'Prior relationship with client',   weight:.20, lo:'Never heard of them', hi:'Know decision-makers'},
+  {id:'cap',  label:'Capability & track record',        weight:.15, lo:'No direct case studies', hi:'Multiple identical projects'},
+  {id:'cmp',  label:'Compliance readiness',             weight:.15, lo:'Missing key documents', hi:'Everything ready'},
+  {id:'cpos', label:'Competitive position',             weight:.15, lo:'Many competitors', hi:'Few; strong USPs'},
+  {id:'bee',  label:'B-BBEE & preference alignment',   weight:.10, lo:'Non-compliant', hi:'Level 1'},
+  {id:'prc',  label:'Pricing competitiveness',         weight:.10, lo:"Can't price within 20%", hi:'Within 5–10% of lowest'},
+  {id:'str',  label:'Strategic value',                 weight:.10, lo:'One-off contract', hi:'Opens new market'},
+  {id:'res',  label:'Resource availability',           weight:.05, lo:'Team stretched', hi:'Dedicated team ready'}
+];
+const DISQ = [
+  'Can you comply with all mandatory requirements?',
+  'Is the briefing session date feasible to attend?',
+  'Is the contract within your CIDB grade or delivery capacity?',
+  'Do you have relevant prior experience for this type of work?',
+  'Is your tax clearance certificate currently valid?'
+];
+
+// ── State ──────────────────────────────────────────────────────
+let state = {
+  tenders: [],
+  currentView: 'dash',
+  selectedId: null,
+  ev: freshEval()
+};
+
+function freshEval() {
+  return {
+    step: 0,
+    d: { name:'', entity:'', category:'', value:'', deadline:'', province:'', sector:'Insurance', month:'April' },
+    d1: Array(5).fill(null),
+    scores: Object.fromEntries(CRITERIA.map(c => [c.id, 3])),
+    ai: '', loading: false
+  };
+}
+
+// ── API ───────────────────────────────────────────────────────
+async function apiFetch(url, opts={}) {
+  const r = await fetch(url, { headers: {'Content-Type':'application/json'}, ...opts });
+  return r.json();
+}
+async function loadTenders() {
+  const db = await apiFetch('/api/tenders');
+  state.tenders = db.tenders || [];
+  renderDash();
+}
+async function saveTender(t) {
+  const saved = await apiFetch('/api/tenders', { method:'POST', body: JSON.stringify(t) });
+  state.tenders.push(saved);
+  renderDash();
+  return saved;
+}
+async function patchTender(id, updates) {
+  const updated = await apiFetch(`/api/tenders/${id}`, { method:'PATCH', body: JSON.stringify(updates) });
+  const i = state.tenders.findIndex(t => t.id === id);
+  if (i !== -1) state.tenders[i] = updated;
+  return updated;
+}
+async function deleteTender(id) {
+  await apiFetch(`/api/tenders/${id}`, { method:'DELETE' });
+  state.tenders = state.tenders.filter(t => t.id !== id);
+  renderDash();
+  showView('dash');
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function calcScore(scores) {
+  return Math.round(CRITERIA.reduce((s,c) => s + (scores[c.id]/5)*c.weight*100, 0));
+}
+function recFromScore(s) {
+  if (s >= 75) return { label:'Strong bid',  cls:'won',    color:'#15803d' };
+  if (s >= 50) return { label:'Conditional', cls:'bidding',color:'#92400e' };
+  return              { label:'No bid',      cls:'no-bid', color:'#b91c1c' };
+}
+function fmtVal(v) {
+  v = Number(v);
+  return v >= 1e6 ? 'R'+(v/1e6).toFixed(1)+'M' : v >= 1000 ? 'R'+(v/1000).toFixed(0)+'k' : 'R'+v;
+}
+function badge(status) {
+  return `<span class="badge b-${status}">${status.replace('-',' ')}</span>`;
+}
+function barCls(s) { return s>=75?'sb-strong':s>=50?'sb-cond':'sb-nobid'; }
+
+// ── View router ───────────────────────────────────────────────
+function showView(v) {
+  ['dash','eval','detail','import'].forEach(n => {
+    document.getElementById('view-'+n).classList.remove('show');
+  });
+  document.getElementById('view-'+v).classList.add('show');
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  const link = document.querySelector(`nav a[data-view="${v === 'detail' ? 'dash' : v}"]`);
+  if (link) link.classList.add('active');
+  state.currentView = v;
+  if (v === 'dash') renderDash();
+  if (v === 'eval') { state.ev = freshEval(); renderEval(); }
+  if (v === 'detail') renderDetail();
+  if (v === 'import') renderImport();
+}
+
+// ── Dashboard render ──────────────────────────────────────────
+function renderDash() {
+  renderKPIs();
+  renderPipeline();
+  renderMatrix();
+  renderActivity();
+}
+
+function renderKPIs() {
+  const ts = state.tenders;
+  const active = ts.filter(t => ['evaluating','bidding','submitted'].includes(t.status));
+  const won = ts.filter(t => t.status === 'won');
+  const closed = ts.filter(t => ['won','no-bid'].includes(t.status));
+  const winRate = closed.length ? Math.round(won.length/closed.length*100) : 0;
+  const pipe = active.reduce((s,t) => s+Number(t.value||0), 0);
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Pipeline value</div><div class="kpi-value">${fmtVal(pipe)}</div><div class="kpi-sub">${active.length} active opportunities</div></div>
+    <div class="kpi-card"><div class="kpi-label">Win rate</div><div class="kpi-value">${winRate}%</div><div class="kpi-sub">${won.length} won of ${closed.length} closed</div></div>
+    <div class="kpi-card"><div class="kpi-label">In evaluation</div><div class="kpi-value">${ts.filter(t=>t.status==='evaluating').length}</div><div class="kpi-sub">Awaiting bid decision</div></div>
+    <div class="kpi-card"><div class="kpi-label">Total tracked</div><div class="kpi-value">${ts.length}</div><div class="kpi-sub">${won.length} won · ${ts.filter(t=>t.status==='no-bid').length} no-bid</div></div>`;
+}
+
+function renderPipeline() {
+  const html = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+    ${MONTHS.map(m => {
+      const mt = state.tenders.filter(t => t.month === m);
+      return `<div>
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">${m}</div>
+        ${mt.length ? mt.map(t => `
+          <div class="t-pill" onclick="openDetail(${t.id})">
+            <div class="t-name">${t.name}</div>
+            <div class="t-meta">${badge(t.status)}<span class="t-val">${fmtVal(t.value)}</span></div>
+          </div>`).join('') : `<div class="empty">No tenders</div>`}
+      </div>`;
+    }).join('')}
+  </div>`;
+  document.getElementById('pipeline-months').innerHTML = html;
+}
+
+function renderMatrix() {
+  const secs = ['Insurance','Tech'];
+  const rows = [
+    { label:'HIGH ≥65', min:65, cls:'mx-high' },
+    { label:'LOW <65',  min:0,  max:65, cls:'mx-low' }
+  ];
+  let html = `<div class="mx-wrap" style="margin-bottom:8px">
+    <div></div>
+    ${secs.map(s=>`<div class="mx-col-head">${s}</div>`).join('')}
+  </div>`;
+  rows.forEach(row => {
+    html += `<div class="mx-wrap">
+      <div class="mx-row-label" style="font-size:10px;color:var(--text-3);padding-right:8px;height:72px">${row.label}</div>
+      ${secs.map(s => {
+        const chips = state.tenders.filter(t =>
+          t.sector === s &&
+          t.score >= row.min &&
+          (row.max === undefined || t.score < row.max) &&
+          t.status !== 'no-bid'
+        );
+        return `<div class="mx-cell">
+          ${chips.map(t => `<span class="mx-chip ${row.cls}" onclick="openDetail(${t.id})">${t.score} · ${t.name.split(' ').slice(0,2).join(' ')}</span>`).join('') || ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+  document.getElementById('matrix-wrap').innerHTML = html;
+}
+
+function renderActivity() {
+  const recent = [...state.tenders]
+    .sort((a,b) => b.id - a.id)
+    .slice(0, 5);
+  const dotColor = { evaluating:'#2563eb', bidding:'#d97706', submitted:'#7c3aed', won:'#16a34a', 'no-bid':'#dc2626' };
+  document.getElementById('activity-feed').innerHTML = recent.map(t => `
+    <div class="act-row" style="cursor:pointer" onclick="openDetail(${t.id})">
+      <div class="act-dot" style="background:${dotColor[t.status]||'#9ca3af'}"></div>
+      <div style="flex:1"><span class="fw-5">${t.name}</span> — ${t.status.replace('-',' ')}</div>
+      <div class="text-muted text-xs">${t.added||''}</div>
+    </div>`).join('') || '<div class="empty">No activity yet</div>';
+}
+
+// ── Detail ────────────────────────────────────────────────────
+function openDetail(id) {
+  state.selectedId = id;
+  showView('detail');
+}
+
+function renderDetail() {
+  const t = state.tenders.find(x => x.id === state.selectedId);
+  if (!t) { showView('dash'); return; }
+  const r = recFromScore(t.score);
+  document.getElementById('detail-title-h').textContent = t.name;
+  document.getElementById('detail-meta-h').textContent = `${t.entity} · ${t.sector} · ${t.month} · ${fmtVal(t.value)}`;
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="kpi-card">
+        <div class="kpi-label">Bid score</div>
+        <div class="score-big" style="color:${r.color}">${t.score}</div>
+        <div class="kpi-sub" style="margin-top:6px">${r.label}</div>
+        <div class="score-bar-wrap" style="margin-top:8px">
+          <div class="score-bar ${barCls(t.score)}" style="width:${t.score}%"></div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Current status</div>
+        <div style="margin:10px 0">${badge(t.status)}</div>
+        <div class="kpi-label" style="margin-top:12px">Update status</div>
+        <div class="status-btns">
+          ${STATUSES.map(s => `<button class="btn btn-sm ${t.status===s?'btn-primary':''}" onclick="updateStatus(${t.id},'${s}')">${s.replace('-',' ')}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Tender details</div>
+      <div class="form-row">
+        <div><div class="form-label">Province</div><div class="fw-5">${t.province||'—'}</div></div>
+        <div><div class="form-label">Category</div><div class="fw-5">${t.category||'—'}</div></div>
+        <div><div class="form-label">Deadline</div><div class="fw-5 mono">${t.deadline||'—'}</div></div>
+        <div><div class="form-label">Added</div><div class="fw-5">${t.added||'—'}</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="flex items-center gap-8 mb-12">
+        <div class="john-avatar">J</div>
+        <div><div class="fw-6">Agent John</div><div class="text-xs text-muted">TenderSafe AI Strategist</div></div>
+        <button class="btn btn-sm ml-auto" id="btn-john-detail" onclick="runJohnDetail(${t.id})">Get analysis →</button>
+      </div>
+      <div id="john-detail-out"></div>
+    </div>
+    <div style="margin-top:16px">
+      <button class="btn btn-danger btn-sm" onclick="if(confirm('Delete this tender?')) deleteTender(${t.id})">Delete tender</button>
+    </div>`;
+}
+
+async function updateStatus(id, status) {
+  await patchTender(id, { status });
+  renderDetail();
+  renderDash();
+}
+
+async function runJohnDetail(id) {
+  const t = state.tenders.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('btn-john-detail').disabled = true;
+  document.getElementById('john-detail-out').innerHTML = '<div class="flex items-center gap-8"><div class="spinner"></div><span class="text-sm text-muted">Agent John is analysing...</span></div>';
+  const text = await callAgentJohn(t.name, t.entity, t.sector, t.value, t.score, recFromScore(t.score).label, '');
+  document.getElementById('john-detail-out').innerHTML = `<div class="john-box">${formatAI(text)}</div>`;
+}
+
+// ── Evaluation flow ───────────────────────────────────────────
+function renderEval() {
+  document.getElementById('eval-content').innerHTML = buildEvalHTML();
+  wireEval();
+}
+
+function evalProgress() {
+  const labels = ['Details','Disqualifiers','Scorecard','Result'];
+  return `<div class="ev-prog">
+    ${labels.map((l,i) => `
+      <div class="ev-dot ${i<state.ev.step?'done':i===state.ev.step?'active':''}"></div>
+      <span class="ev-label ${i===state.ev.step?'active':''}">${l}</span>
+    `).join('')}
+  </div>`;
+}
+
+function buildEvalHTML() {
+  const ev = state.ev;
+  const prog = evalProgress();
+
+  if (ev.step === 0) {
+    const d = ev.d;
+    return `${prog}
+    <div class="card">
+      <div class="form-group"><label class="form-label">Tender name / reference *</label><input type="text" id="e-name" value="${d.name}" placeholder="e.g. GEPF IT Services Panel 2025"></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Procuring entity</label><input type="text" id="e-ent" value="${d.entity}" placeholder="e.g. SITA, GEPF, DPW"></div><div class="form-group"><label class="form-label">Category</label><input type="text" id="e-cat" value="${d.category}" placeholder="e.g. IT Services, Training"></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Estimated value (ZAR)</label><input type="number" id="e-val" value="${d.value}" placeholder="e.g. 500000"></div><div class="form-group"><label class="form-label">Closing date</label><input type="date" id="e-dl" value="${d.deadline}"></div></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Province</label>
+          <select id="e-prov"><option value="">Select...</option>${['Eastern Cape','Free State','Gauteng','KwaZulu-Natal','Limpopo','Mpumalanga','Northern Cape','North West','Western Cape'].map(p=>`<option ${d.province===p?'selected':''}>${p}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="form-label">Sector</label>
+          <select id="e-sec">${SECTORS.map(s=>`<option ${d.sector===s?'selected':''}>${s}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Pipeline month</label>
+        <select id="e-month">${MONTHS.map(m=>`<option ${d.month===m?'selected':''}>${m}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div style="margin-top:12px"><button class="btn btn-primary btn-full" id="ev-next0">Stage 1 — Disqualifiers →</button></div>`;
+  }
+
+  if (ev.step === 1) {
+    const hasNo = ev.d1.some(v => v === false);
+    const allDone = ev.d1.every(v => v !== null);
+    return `${prog}
+    <div class="card mb-12">
+      <div class="card-title" style="margin-bottom:8px">Instant disqualifiers — any No = do not bid</div>
+      ${DISQ.map((q,i) => `
+        <div style="${i>0?'border-top:1px solid var(--border);padding-top:12px;margin-top:12px':''}">
+          <div class="mb-8 fw-5" style="font-size:13px">${q}</div>
+          <div class="yn-group">
+            <button class="yn-btn ${ev.d1[i]===true?'yes':''}" data-idx="${i}" data-v="yes">Yes</button>
+            <button class="yn-btn ${ev.d1[i]===false?'no':''}" data-idx="${i}" data-v="no">No</button>
+          </div>
+        </div>`).join('')}
+    </div>
+    ${hasNo ? `<div class="alert alert-danger mb-12">Hard stop — do not bid on this tender. One or more mandatory requirements cannot be met.</div>` : ''}
+    <div class="flex gap-8">
+      <button class="btn" id="ev-back1">← Back</button>
+      <button class="btn btn-primary" style="flex:1" id="ev-next1" ${!allDone?'disabled':''}>Stage 2 — Scorecard →</button>
+    </div>`;
+  }
+
+  if (ev.step === 2) {
+    return `${prog}
+    <div class="card mb-12">
+      <div class="card-title" style="margin-bottom:4px">Weighted scorecard</div>
+      <div class="text-sm text-muted mb-12">Score each criterion 1 (weak) to 5 (strong).</div>
+      ${CRITERIA.map((c,i) => `
+        <div style="${i>0?'border-top:1px solid var(--border);padding-top:10px;margin-top:10px':''}">
+          <div class="flex items-center mb-4">
+            <span class="fw-5 text-sm">${c.label}</span>
+            <span class="text-xs text-muted mono ml-auto">${Math.round(c.weight*100)}%</span>
+          </div>
+          <div class="sl-row">
+            <span class="sl-hint">${c.lo}</span>
+            <input type="range" min="1" max="5" step="1" value="${ev.scores[c.id]}" data-cid="${c.id}">
+            <span class="sl-num" id="sn-${c.id}">${ev.scores[c.id]}</span>
+            <span class="sl-hint right">${c.hi}</span>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="flex gap-8">
+      <button class="btn" id="ev-back2">← Back</button>
+      <button class="btn btn-primary" style="flex:1" id="ev-next2">Calculate result →</button>
+    </div>`;
+  }
+
+  if (ev.step === 3) {
+    const score = calcScore(ev.scores);
+    const r = recFromScore(score);
+    const added = state.tenders.some(t => t._evAdded && t.name === ev.d.name);
+    return `${prog}
+    <div class="grid-2 mb-12">
+      <div class="kpi-card">
+        <div class="kpi-label">Bid/No-Bid Score</div>
+        <div class="score-big" style="color:${r.color}">${score}</div>
+        <div class="kpi-sub" style="margin-top:6px">${r.label}</div>
+        <div class="score-bar-wrap" style="margin-top:8px">
+          <div class="score-bar ${barCls(score)}" style="width:${score}%"></div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Criteria breakdown</div>
+        ${CRITERIA.map(c => `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <span style="font-size:11px;color:var(--text-2);width:130px;flex-shrink:0">${c.label}</span>
+            <div class="score-bar-wrap" style="flex:1">
+              <div class="score-bar" style="width:${ev.scores[c.id]/5*100}%;background:#6b7280"></div>
+            </div>
+            <span class="mono text-xs">${ev.scores[c.id]}/5</span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card mb-12">
+      <div class="flex items-center gap-8 mb-12">
+        <div class="john-avatar">J</div>
+        <div><div class="fw-6">Agent John</div><div class="text-xs text-muted">AI Bid Strategist</div></div>
+        ${ev.ai ? '' : `<button class="btn btn-sm ml-auto" id="btn-john-ev">Get analysis →</button>`}
+        ${ev.loading ? '<div class="spinner ml-auto"></div>' : ''}
+      </div>
+      ${ev.ai ? `<div class="john-box">${formatAI(ev.ai)}</div>` : '<div class="text-sm text-muted">Click "Get analysis" for Agent John\'s strategic assessment.</div>'}
+    </div>
+    <div class="flex gap-8">
+      <button class="btn" id="ev-back3">← Back</button>
+      ${added
+        ? `<button class="btn" style="flex:1;opacity:.5" disabled>Added to pipeline ✓</button>`
+        : `<button class="btn btn-green" style="flex:1" id="ev-add-btn">Add to pipeline →</button>`}
+    </div>`;
+  }
+}
+
+function wireEval() {
+  const ev = state.ev;
+  const on = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); };
+
+  if (ev.step === 0) {
+    on('ev-next0', () => {
+      ev.d.name     = document.getElementById('e-name').value;
+      ev.d.entity   = document.getElementById('e-ent').value;
+      ev.d.category = document.getElementById('e-cat').value;
+      ev.d.value    = document.getElementById('e-val').value;
+      ev.d.deadline = document.getElementById('e-dl').value;
+      ev.d.province = document.getElementById('e-prov').value;
+      ev.d.sector   = document.getElementById('e-sec').value;
+      ev.d.month    = document.getElementById('e-month').value;
+      if (!ev.d.name) { alert('Enter a tender name.'); return; }
+      ev.step = 1; renderEval();
+    });
+  }
+
+  if (ev.step === 1) {
+    document.querySelectorAll('[data-idx]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        ev.d1[+btn.dataset.idx] = btn.dataset.v === 'yes';
+        renderEval();
+      });
+    });
+    on('ev-back1', () => { ev.step = 0; renderEval(); });
+    on('ev-next1', () => { ev.step = 2; renderEval(); });
+  }
+
+  if (ev.step === 2) {
+    document.querySelectorAll('input[type=range]').forEach(r => {
+      r.addEventListener('input', () => {
+        ev.scores[r.dataset.cid] = +r.value;
+        const el = document.getElementById('sn-'+r.dataset.cid);
+        if (el) el.textContent = r.value;
+      });
+    });
+    on('ev-back2', () => { ev.step = 1; renderEval(); });
+    on('ev-next2', () => { ev.step = 3; renderEval(); });
+  }
+
+  if (ev.step === 3) {
+    on('ev-back3', () => { ev.step = 2; renderEval(); });
+    on('btn-john-ev', async () => {
+      ev.loading = true; renderEval();
+      const d = ev.d;
+      const score = calcScore(ev.scores);
+      const r = recFromScore(score);
+      const breakdown = CRITERIA.map(c=>`${c.label}: ${ev.scores[c.id]}/5`).join(', ');
+      ev.ai = await callAgentJohn(d.name, d.entity, d.sector, d.value, score, r.label, breakdown);
+      ev.loading = false; renderEval();
+    });
+    on('ev-add-btn', async () => {
+      const score = calcScore(ev.scores);
+      const r = recFromScore(score);
+      const d = ev.d;
+      await saveTender({
+        name: d.name, entity: d.entity, category: d.category,
+        value: Number(d.value)||0, deadline: d.deadline,
+        province: d.province, sector: d.sector, month: d.month,
+        score, status: r.cls === 'no-bid' ? 'no-bid' : 'evaluating',
+        _evAdded: true
+      });
+      ev._added = true;
+      renderEval();
+      setTimeout(() => showView('dash'), 800);
+    });
+  }
+}
+
+// ── Agent John ────────────────────────────────────────────────
+async function callAgentJohn(name, entity, sector, value, score, recLabel, breakdown) {
+  try {
+    const r = await fetch('/api/agent-john', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{
+          role: 'user',
+          content: `Tender: ${name||'Unnamed'}\nEntity: ${entity||'Unknown'}\nSector: ${sector||'General'}\nValue: R${value||'unknown'}\nBid score: ${score}/100 — ${recLabel}${breakdown?'\nCriteria: '+breakdown:''}\n\nGive your strategic assessment.`
+        }]
+      })
+    });
+    const data = await r.json();
+    return data.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || 'Analysis unavailable.';
+  } catch (e) {
+    return 'Agent John unavailable. Act on the scorecard recommendation above.';
+  }
+}
+
+function formatAI(text) {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+// ── eTenders Import ───────────────────────────────────────────
+const ET_KEYWORDS = [
+  { label: 'Financial and insurance activities', q: 'Financial and insurance activities' },
+  { label: 'Insurance, reinsurance and pension funding, except compulsory social security', q: 'Insurance, reinsurance and pension funding, except compulsory social security' },
+  { label: 'Computer programming, consultancy and related activities', q: 'Computer programming, consultancy and related activities' },
+  { label: 'Information and communication', q: 'Information and communication' },
+  { label: 'Information service activities', q: 'Information service activities' }
+];
+
+const ET_PROVINCES = ['Northern Cape','Limpopo','Eastern Cape','Free State','North West'];
+
+let etState = {
+  keywords: [ET_KEYWORDS[0].q],
+  provinces: [...ET_PROVINCES],
+  results: [],
+  loading: false,
+  imported: new Set(),
+  page: 1,
+  total: 0
+};
+
+
+function renderImport() {
+  const c = document.getElementById('import-content');
+  if (!c) return;
+
+  const kwHtml = ET_KEYWORDS.map(k =>
+    `<button class="et-kw ${etState.keywords.includes(k.q)?'active':''}" onclick="etToggleKeyword('${k.q}')">${k.label}</button>`
+  ).join('');
+
+  const provHtml = ET_PROVINCES.map(p =>
+    `<span class="et-prov-chip ${etState.provinces.includes(p)?'active':''}" onclick="etToggleProv('${p}')">${p}</span>`
+  ).join('');
+
+  const resultsHtml = etState.loading
+    ? `<div class="flex items-center gap-8" style="padding:24px 0"><div class="spinner"></div><span class="text-sm text-muted">Fetching from National Treasury...</span></div>`
+    : etState.results.length === 0
+      ? `<div class="empty" style="padding:16px 0">No results. Try a different keyword or remove province filters.</div>`
+      : etState.results.map((t, i) => {
+          const score = etQuickScore(t);
+          const r = recFromScore(score);
+          const alreadyIn = etState.imported.has(t.ocid) || state.tenders.some(x => x.ocid === t.ocid);
+          return `<div class="et-result">
+            <div class="et-result-body">
+              <div class="et-result-name">${t.name}</div>
+              <div class="et-result-meta">${t.entity} · ${t.province || 'National'} · ${t.deadline ? 'Closes: '+t.deadline : 'No deadline'} · ${t.value > 0 ? fmtVal(t.value) : 'Value TBC'}</div>
+              ${t.compulsoryBriefing ? '<div style="font-size:11px;color:#b91c1c;font-weight:600;margin-top:3px">⚠ Compulsory briefing' + (t.briefingDate ? ': '+t.briefingDate : '') + '</div>' : ''}
+            </div>
+            <div class="et-score" style="color:${r.color}">${score}</div>
+            ${alreadyIn
+              ? `<span class="imported-tag">✓ Imported</span>`
+              : `<button class="btn btn-sm btn-green" onclick="etImport(${i})">Import →</button>`}
+          </div>`;
+        }).join('');
+
+  c.innerHTML = `
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title" style="margin-bottom:8px">Target categories</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">${kwHtml}</div>
+      <div class="card-title" style="margin-bottom:8px">Low-competition provinces</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">${provHtml}</div>
+      <button class="btn btn-primary" onclick="etFetch()" ${etState.loading?'disabled':''}>
+        ${etState.loading?'Fetching...':'Search eTenders →'}
+      </button>
+      ${etState.total>0?`<span class="text-sm text-muted" style="margin-left:12px">${etState.results.length} of ${etState.total} results</span>`:''}
+    </div>
+    <div>${resultsHtml}</div>`;
+}
+
+function etToggleKeyword(q) {
+  if (etState.keywords.includes(q)) {
+    if (etState.keywords.length > 1) {
+      etState.keywords = etState.keywords.filter(k => k !== q);
+    }
+  } else {
+    etState.keywords.push(q);
+  }
+  etState.results = [];
+  renderImport();
+}
+
+function etToggleProv(p) {
+  if (etState.provinces.includes(p)) {
+    etState.provinces = etState.provinces.filter(x => x !== p);
+  } else {
+    etState.provinces.push(p);
+  }
+  renderImport();
+}
+
+async function etFetch() {
+  etState.loading = true;
+  etState.results = [];
+  renderImport();
+
+  try {
+    const r = await fetch('/api/etenders/search?provinces=' + encodeURIComponent(etState.provinces.join(',')) + '&page=' + etState.page);
+    const data = await r.json();
+
+    if (data.error) throw new Error(data.error);
+
+    let results = data.tenders || [];
+
+    // Filter by selected provinces (keep National + matching)
+    if (etState.provinces.length > 0) {
+      results = results.filter(t => t.province === 'National' || etState.provinces.includes(t.province));
+    }
+    // Filter out irrelevant results - must be insurance or tech related
+    const INS = ['insur','broker','short-term','short term','reinsur','underwr'];
+    const TECH = ['software','information technology',' it ','ict service','data analytics','cyber','artificial intelligence','records management software','application development','system development'];
+    results = results.filter(t => {
+      const n = (t.name||'').toLowerCase();
+      return INS.some(k => n.includes(k)) || TECH.some(k => n.includes(k));
+    });
+    if (etState.provinces.length > 0) {
+      results = results.filter(t => !t.province || t.province === 'National' || etState.provinces.includes(t.province));
+    }
+    etState.results = results;
+    etState.total = data.total || results.length;
+  } catch (err) {
+    etState.results = [];
+    console.error('eTenders:', err.message);
+  }
+
+  etState.loading = false;
+  renderImport();
+}
+
+function etQuickScore(t) {
+  // Quick heuristic score based on available data
+  let score = 40; // base
+  // Province bonus — low competition areas
+  if (['Northern Cape','Limpopo'].includes(t.province)) score += 20;
+  else if (['Eastern Cape','Mpumalanga','Free State'].includes(t.province)) score += 12;
+  // Category match bonus
+  const name = (t.name || '').toLowerCase();
+  if (name.includes('insurance') || name.includes('broker')) score += 15;
+  if (name.includes('ai') || name.includes('artificial') || name.includes('software') || name.includes('technology')) score += 12;
+  // Value sweet spot (R500k - R5M)
+  const v = Number(t.value);
+  if (v >= 500000 && v <= 5000000) score += 10;
+  else if (v > 0 && v < 500000) score += 5;
+  // Has deadline
+  if (t.deadline) score += 3;
+  return Math.min(score, 95);
+}
+
+async function etImport(i) {
+  const t = etState.results[i];
+  if (!t) return;
+
+  const score = etQuickScore(t);
+  const r = recFromScore(score);
+  const now = new Date();
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  await saveTender({
+    name: t.name,
+    entity: t.entity,
+    category: t.category,
+    value: t.value,
+    deadline: t.deadline,
+    province: t.province,
+    sector: t.sector,
+    month: months[now.getMonth()],
+    score,
+    status: r.cls === 'no-bid' ? 'no-bid' : 'evaluating',
+    ocid: t.ocid,
+    source: 'etenders'
+  });
+
+  etState.imported.add(t.ocid);
+  renderImport();
+}
+
+// Hook into showView to render import when navigating to it
+
+// ── Boot ──────────────────────────────────────────────────────
+loadTenders();
+</script>
+</body>
+</html>

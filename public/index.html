@@ -680,7 +680,9 @@ async function runJohnDetail(id) {
   if (!t) return;
   document.getElementById('btn-john-detail').disabled = true;
   document.getElementById('john-detail-out').innerHTML = '<div class="flex items-center gap-8"><div class="spinner"></div><span class="text-sm text-muted">Agent John is analysing...</span></div>';
-  const text = await callAgentJohn(t.name, t.entity, t.sector, t.value, t.score, recFromScore(t.score).label, '');
+  const docID = t.supportDocument?.[0]?.supportDocumentID || null;
+  const docName = t.supportDocument?.[0]?.fileName || null;
+  const text = await callAgentJohn(t.name, t.entity, t.sector, t.value, t.score, recFromScore(t.score).label, '', docID, docName);
   document.getElementById('john-detail-out').innerHTML = `<div class="john-box">${formatAI(text)}</div>`;
 }
 
@@ -867,7 +869,9 @@ function wireEval() {
       const score = calcScore(ev.scores);
       const r = recFromScore(score);
       const breakdown = CRITERIA.map(c=>`${c.label}: ${ev.scores[c.id]}/5`).join(', ');
-      ev.ai = await callAgentJohn(d.name, d.entity, d.sector, d.value, score, r.label, breakdown);
+      const evDocID = d.supportDocument?.[0]?.supportDocumentID || null;
+      const evDocName = d.supportDocument?.[0]?.fileName || null;
+      ev.ai = await callAgentJohn(d.name, d.entity, d.sector, d.value, score, r.label, breakdown, evDocID, evDocName);
       ev.loading = false; renderEval();
     });
     on('ev-add-btn', async () => {
@@ -889,12 +893,14 @@ function wireEval() {
 }
 
 // ── Agent John ────────────────────────────────────────────────
-async function callAgentJohn(name, entity, sector, value, score, recLabel, breakdown) {
+async function callAgentJohn(name, entity, sector, value, score, recLabel, breakdown, supportDocumentID, fileName) {
   try {
     const r = await fetch('/api/agent-john', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        supportDocumentID: supportDocumentID || null,
+        fileName: fileName || null,
         messages: [{
           role: 'user',
           content: `Tender: ${name||'Unnamed'}\nEntity: ${entity||'Unknown'}\nSector: ${sector||'General'}\nValue: R${value||'unknown'}\nBid score: ${score}/100 — ${recLabel}${breakdown?'\nCriteria: '+breakdown:''}\n\nGive your strategic assessment.`

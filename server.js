@@ -67,7 +67,8 @@ app.get('/api/etenders/search', async (req, res) => {
       compulsoryBriefing: t.briefingCompulsory||false,
       briefingDate: t.compulsory_briefing_session||'',
       briefingVenue: t.briefingVenue||'',
-      eSubmission: t.eSubmission||false
+      eSubmission: t.eSubmission||false,
+      supportDocument: t.supportDocument||[]
     }));
     res.json({tenders, total: tenders.length});
   } catch(err) {

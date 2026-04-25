@@ -133,7 +133,7 @@ What pricing strategy makes sense? Any red flags on budget or rate benchmarks?
 Specific action items in priority order. Include document gathering, site visits, clarification questions to submit.
 
 Be direct, specific, and commercially sharp. No generic advice. If information is missing from the tender, say so explicitly.`, messages: req.body.messages }),
-      signal: AbortSignal.timeout(30000)
+      signal: AbortSignal.timeout(60000)
     });
     const data = await r.json();
     console.log('Anthropic:', JSON.stringify(data).slice(0,200));

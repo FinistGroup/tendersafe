@@ -1,5 +1,214 @@
 const express = require('express');
 const pdfParse = require('pdf-parse');
+
+const nodemailer = require('nodemailer');
+const cron = require('node-cron');
+
+// ── Finist Client Profile ──────────────────────────────────────────────
+const FINIST_PROFILE = {
+  company: 'Finist (Pty) Ltd',
+  tradingAs: 'InsureBuddy / Lambda Brokers',
+  registration: '2026/318089/07',
+  director: 'Makabongwe Gambushe',
+  address: '28 4th Street, Parkhurst, Johannesburg, Gauteng, 2193',
+  fspStatus: 'FSP application pending (Lambda Brokers)',
+  bbbee: 'Level 1 — 100% Black-owned',
+  services: [
+    'Short-term insurance broking',
+    'Medical aid broking and administration',
+    'Gap cover distribution',
+    'AI-powered insurance aggregation and comparison',
+    'Insurance admin automation for brokerages'
+  ],
+  email: 'support@finist.ai',
+  phone: 'TBC',
+  csd: 'Registration pending',
+  taxClearance: 'To be confirmed'
+};
+
+// ── Email transporter ──────────────────────────────────────────────────
+const transporter = nodemailer.createTransport({
+  host: 'smtp.office365.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
+
+// ── Simple auth middleware ─────────────────────────────────────────────
+function requireAuth(req, res, next) {
+  const token = req.headers['x-auth-token'] || req.query.token;
+  if (token === process.env.DASHBOARD_PASSWORD) return next();
+  res.status(401).json({ error: 'Unauthorized' });
+}
+
+// ── Login endpoint ─────────────────────────────────────────────────────
+app.post('/api/login', (req, res) => {
+  const { password } = req.body;
+  if (password === process.env.DASHBOARD_PASSWORD) {
+    res.json({ token: process.env.DASHBOARD_PASSWORD, ok: true });
+  } else {
+    res.status(401).json({ error: 'Invalid password' });
+  }
+});
+
+// ── Proceed/Decline endpoint ───────────────────────────────────────────
+app.post('/api/tenders/:id/decision', requireAuth, (req, res) => {
+  const db = readDB();
+  const i = db.tenders.findIndex(t => String(t.id) === req.params.id);
+  if (i === -1) return res.status(404).json({ error: 'Not found' });
+  db.tenders[i].decision = req.body.decision; // 'proceed' or 'decline'
+  db.tenders[i].decisionDate = new Date().toISOString();
+  writeDB(db);
+  res.json(db.tenders[i]);
+});
+
+// ── Bid draft endpoint ─────────────────────────────────────────────────
+app.post('/api/agent-john/draft', requireAuth, async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(500).json({ error: 'No API key' });
+  const { tender } = req.body;
+  try {
+    let docText = '';
+    if (tender.supportDocument?.[0]?.supportDocumentID) {
+      try {
+        const pdfParse = require('pdf-parse');
+        const pdfUrl = `https://www.etenders.gov.za/home/Download/?blobName=${tender.supportDocument[0].supportDocumentID}.pdf&downloadedFileName=tender.pdf`;
+        const pdfRes = await fetch(pdfUrl, { signal: AbortSignal.timeout(20000) });
+        if (pdfRes.ok) {
+          const buf = await pdfRes.arrayBuffer();
+          const parsed = await pdfParse(Buffer.from(buf));
+          docText = parsed.text.slice(0, 8000);
+        }
+      } catch(e) { console.log('PDF fetch failed:', e.message); }
+    }
+
+    const profile = FINIST_PROFILE;
+    const prompt = `You are Agent John, bid writer for ${profile.company} (trading as ${profile.tradingAs}).
+
+COMPANY PROFILE:
+- Registration: ${profile.registration}
+- Director: ${profile.director}
+- Address: ${profile.address}
+- FSP Status: ${profile.fspStatus}
+- BBBEE: ${profile.bbbee}
+- Services: ${profile.services.join(', ')}
+
+TENDER:
+- Name: ${tender.name}
+- Reference: ${tender.ref}
+- Entity: ${tender.entity}
+- Province: ${tender.province}
+- Deadline: ${tender.deadline}
+- Compulsory Briefing: ${tender.compulsoryBriefing ? 'YES - ' + tender.briefingDate + ' at ' + tender.briefingVenue : 'No'}
+- Submission: ${tender.eSubmission ? 'eSubmission' : 'Physical'}
+
+${docText ? 'TENDER DOCUMENT:\n' + docText : ''}
+
+Draft a complete, professional bid response for this tender on behalf of ${profile.company}. Include:
+1. Cover letter addressed to the SCM office
+2. Company overview and relevant experience
+3. Technical proposal aligned to the scope
+4. BBBEE and compliance declaration
+5. For insurance tenders: list all covers required and flag which need underwriter quotes
+
+Format each section clearly. Where information is missing (e.g. tax PIN, CSD number), insert [PLACEHOLDER - INSERT BEFORE SUBMISSION].`;
+
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 4000, system: 'You are Agent John, an expert bid writer for a South African insurance brokerage.', messages: [{ role: 'user', content: prompt }] }),
+      signal: AbortSignal.timeout(90000)
+    });
+    const data = await r.json();
+    res.json(data);
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── RFQ generator endpoint ─────────────────────────────────────────────
+app.post('/api/agent-john/rfq', requireAuth, async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(500).json({ error: 'No API key' });
+  const { tender, covers } = req.body;
+  try {
+    const prompt = `You are Agent John. Generate professional RFQ (Request for Quotation) emails to insurers for the following covers needed for a government tender.
+
+TENDER: ${tender.name} — ${tender.entity}
+BROKER: ${FINIST_PROFILE.company} (acting as intermediary)
+COVERS NEEDED: ${covers.join(', ')}
+
+For each cover, write a separate RFQ email to an insurer. Include:
+- What is being insured (based on the tender)
+- The government entity and contract duration
+- What information is needed from the insurer to complete the bid
+- Deadline for quote submission (allow 3 days before tender deadline)
+- Contact: ${FINIST_PROFILE.email}
+
+Be professional and concise.`;
+
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 3000, system: 'You are Agent John, bid strategist and writer.', messages: [{ role: 'user', content: prompt }] }),
+      signal: AbortSignal.timeout(60000)
+    });
+    const data = await r.json();
+    res.json(data);
+  } catch(err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Daily digest cron ──────────────────────────────────────────────────
+async function sendDailyDigest() {
+  try {
+    const key = process.env.ANTHROPIC_API_KEY;
+    const data = JSON.parse(fs.readFileSync('./data/etenders_cache.json', 'utf8'));
+    const CATS = ['Financial and insurance activities','Insurance, reinsurance and pension funding, except compulsory social security','Computer programming, consultancy and related activities','Information and communication','Information service activities'];
+    const PROVS = ['Northern Cape','Limpopo','Eastern Cape','Free State','North West'];
+    
+    const today = new Date().toISOString().split('T')[0];
+    const recent = data.filter(t => {
+      const pub = t.datePublished?.split('T')[0];
+      return pub === today && CATS.includes(t.category) && PROVS.includes(t.province);
+    });
+
+    if (recent.length === 0) {
+      console.log('No new tenders today');
+      return;
+    }
+
+    let emailBody = '<h2>TenderSafe Daily Digest</h2>';
+    emailBody += `<p>${recent.length} new tender(s) matching your profile today:</p>`;
+
+    for (const t of recent.slice(0, 10)) {
+      emailBody += `<hr><h3>${t.description||t.tender_No}</h3>`;
+      emailBody += `<p><strong>Entity:</strong> ${t.department}<br>`;
+      emailBody += `<strong>Province:</strong> ${t.province}<br>`;
+      emailBody += `<strong>Deadline:</strong> ${t.closing_Date?.split('T')[0]||'TBC'}<br>`;
+      emailBody += `<strong>Briefing:</strong> ${t.briefingCompulsory?'Compulsory':'No'}</p>`;
+      emailBody += `<p><a href="https://tendersafe.onrender.com">View & Analyse on TenderSafe</a></p>`;
+    }
+
+    await transporter.sendMail({
+      from: process.env.SMTP_USER,
+      to: process.env.DIGEST_EMAIL,
+      subject: `TenderSafe: ${recent.length} new tender(s) — ${today}`,
+      html: emailBody
+    });
+    console.log('Daily digest sent');
+  } catch(err) {
+    console.error('Digest error:', err.message);
+  }
+}
+
+// Run at 7am daily
+cron.schedule('0 7 * * *', sendDailyDigest);
+
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();

@@ -174,3 +174,106 @@ ${docText}`;
 });
 
 app.listen(process.env.PORT || 3000, () => console.log('\n  TenderSafe is running\n  → http://localhost:' + (process.env.PORT || 3000) + '\n'));
+
+// ── Auth ──────────────────────────────────────────────────────────────
+function requireAuth(req, res, next) {
+  const token = req.headers['x-auth-token'] || req.query.token;
+  if (token === process.env.DASHBOARD_PASSWORD) return next();
+  res.status(401).json({ error: 'Unauthorized' });
+}
+
+app.post('/api/login', (req, res) => {
+  const { password } = req.body;
+  if (password === process.env.DASHBOARD_PASSWORD) {
+    res.json({ token: process.env.DASHBOARD_PASSWORD, ok: true });
+  } else {
+    res.status(401).json({ error: 'Invalid password' });
+  }
+});
+
+app.post('/api/tenders/:id/decision', requireAuth, (req, res) => {
+  const db = readDB();
+  const i = db.tenders.findIndex(t => String(t.id) === req.params.id);
+  if (i === -1) return res.status(404).json({ error: 'Not found' });
+  db.tenders[i].decision = req.body.decision;
+  db.tenders[i].decisionDate = new Date().toISOString();
+  writeDB(db);
+  res.json(db.tenders[i]);
+});
+
+app.post('/api/agent-john/draft', requireAuth, async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(500).json({ error: 'No API key' });
+  const { tender } = req.body;
+  try {
+    let docText = '';
+    if (tender.supportDocument?.[0]?.supportDocumentID) {
+      try {
+        const pdfUrl = `https://www.etenders.gov.za/home/Download/?blobName=${tender.supportDocument[0].supportDocumentID}.pdf&downloadedFileName=tender.pdf`;
+        const pdfRes = await fetch(pdfUrl, { signal: AbortSignal.timeout(20000) });
+        if (pdfRes.ok) { const buf = await pdfRes.arrayBuffer(); const parsed = await pdfParse(Buffer.from(buf)); docText = parsed.text.slice(0,8000); }
+      } catch(e) { console.log('PDF fetch failed:', e.message); }
+    }
+    const p = { company:'Finist (Pty) Ltd', tradingAs:'InsureBuddy / Lambda Brokers', registration:'2026/318089/07', director:'Makabongwe Gambushe', address:'28 4th Street, Parkhurst, Johannesburg', fspStatus:'FSP application pending (Lambda Brokers)', bbbee:'Level 1 - 100% Black-owned', services:['Short-term insurance broking','Medical aid broking','Gap cover distribution','AI-powered insurance aggregation'], email:'support@finist.ai' };
+    const prompt = `You are Agent John, bid writer for ${p.company} (trading as ${p.tradingAs}).
+
+COMPANY PROFILE:
+- Registration: ${p.registration}
+- Director: ${p.director}
+- Address: ${p.address}
+- FSP Status: ${p.fspStatus}
+- BBBEE: ${p.bbbee}
+- Services: ${p.services.join(', ')}
+
+TENDER:
+- Name: ${tender.name}
+- Reference: ${tender.ref}
+- Entity: ${tender.entity}
+- Province: ${tender.province}
+- Deadline: ${tender.deadline}
+- Compulsory Briefing: ${tender.compulsoryBriefing ? 'YES - ' + tender.briefingDate + ' at ' + tender.briefingVenue : 'No'}
+- Submission: ${tender.eSubmission ? 'eSubmission' : 'Physical'}
+
+${docText ? 'TENDER DOCUMENT:\n' + docText : ''}
+
+Draft a complete professional bid response. Include:
+1. Cover letter to SCM office
+2. Company overview and relevant experience
+3. Technical proposal aligned to scope
+4. BBBEE and compliance declaration
+5. For insurance tenders: list all covers required and flag which need underwriter quotes
+
+Where information is missing insert [PLACEHOLDER - INSERT BEFORE SUBMISSION].`;
+
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 4000, system: 'You are Agent John, expert bid writer for a South African insurance brokerage.', messages: [{ role: 'user', content: prompt }] }),
+      signal: AbortSignal.timeout(90000)
+    });
+    res.json(await r.json());
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/agent-john/rfq', requireAuth, async (req, res) => {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.status(500).json({ error: 'No API key' });
+  const { tender, covers } = req.body;
+  try {
+    const prompt = `Generate professional RFQ emails to insurers for the following covers needed for a government tender.
+
+TENDER: ${tender.name} - ${tender.entity}
+BROKER: Finist (Pty) Ltd t/a Lambda Brokers (acting as intermediary)
+COVERS NEEDED: ${covers.join(', ')}
+
+For each cover write a separate RFQ email. Include what is being insured, the government entity and contract duration, information needed from insurer, deadline for quote (3 days before tender deadline), contact: support@finist.ai`;
+
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 3000, system: 'You are Agent John, bid strategist and writer.', messages: [{ role: 'user', content: prompt }] }),
+      signal: AbortSignal.timeout(60000)
+    });
+    res.json(await r.json());
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});

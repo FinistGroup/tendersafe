@@ -454,7 +454,25 @@ const DISQ = [
 ];
 
 // ── State ──────────────────────────────────────────────────────
-let state = {
+
+  // ── Auth ──────────────────────────────────────────────────────────────
+  let authToken = sessionStorage.getItem('ts_token') || '';
+  
+  async function ensureLogin() {
+    if (authToken) return true;
+    const pwd = prompt('TenderSafe password:');
+    if (!pwd) return false;
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd })
+    });
+    const d = await r.json();
+    if (d.ok) { authToken = d.token; sessionStorage.setItem('ts_token', authToken); return true; }
+    alert('Wrong password'); return false;
+  }
+
+  let state = {
   tenders: [],
   currentView: 'dash',
   selectedId: null,
@@ -1099,6 +1117,88 @@ async function etImport(i) {
 
 // ── Boot ──────────────────────────────────────────────────────
 loadTenders();
+
+  // ── Proceed / Decline ─────────────────────────────────────────────────
+  async function proceedTender(id) {
+    if (!await ensureLogin()) return;
+    await fetch(`/api/tenders/${id}/decision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-auth-token': authToken },
+      body: JSON.stringify({ decision: 'proceed' })
+    });
+    alert('Marked as Proceed. Draft the bid below.');
+  }
+
+  async function declineTender(id) {
+    if (!await ensureLogin()) return;
+    await fetch(`/api/tenders/${id}/decision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-auth-token': authToken },
+      body: JSON.stringify({ decision: 'decline' })
+    });
+    alert('Marked as Declined.');
+  }
+
+  // ── Draft Bid ─────────────────────────────────────────────────────────
+  async function draftBid(id) {
+    if (!await ensureLogin()) return;
+    const t = state.tenders.find(x => x.id === id);
+    if (!t) return;
+    const out = document.getElementById('draft-out');
+    out.innerHTML = '<div class="flex items-center gap-8"><div class="spinner"></div><span class="text-sm text-muted">Agent John is drafting the bid...</span></div>';
+    try {
+      const r = await fetch('/api/agent-john/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-auth-token': authToken },
+        body: JSON.stringify({ tender: t })
+      });
+      const data = await r.json();
+      const text = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || 'Draft unavailable.';
+      out.innerHTML = `<div class="card" style="margin-top:8px">
+        <div style="font-weight:600;margin-bottom:8px">📄 Bid Draft</div>
+        <div style="white-space:pre-wrap;font-size:13px">${formatAI(text)}</div>
+        <button class="btn btn-sm" style="margin-top:8px" onclick="copyDraft()">Copy to clipboard</button>
+      </div>`;
+      window._lastDraft = text;
+    } catch(e) {
+      out.innerHTML = '<p class="text-muted">Draft failed: ' + e.message + '</p>';
+    }
+  }
+
+  function copyDraft() {
+    navigator.clipboard.writeText(window._lastDraft || '');
+    alert('Copied to clipboard');
+  }
+
+  // ── Generate RFQs ─────────────────────────────────────────────────────
+  async function generateRFQ(id) {
+    if (!await ensureLogin()) return;
+    const t = state.tenders.find(x => x.id === id);
+    if (!t) return;
+    const coversInput = prompt('Enter covers needed (comma separated):\ne.g. Assets All Risk, Public Liability, Motor Fleet, SASRIA');
+    if (!coversInput) return;
+    const covers = coversInput.split(',').map(c => c.trim()).filter(Boolean);
+    const out = document.getElementById('draft-out');
+    out.innerHTML = '<div class="flex items-center gap-8"><div class="spinner"></div><span class="text-sm text-muted">Generating RFQ emails...</span></div>';
+    try {
+      const r = await fetch('/api/agent-john/rfq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-auth-token': authToken },
+        body: JSON.stringify({ tender: t, covers })
+      });
+      const data = await r.json();
+      const text = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || 'RFQ generation unavailable.';
+      out.innerHTML = `<div class="card" style="margin-top:8px">
+        <div style="font-weight:600;margin-bottom:8px">📧 RFQ Emails</div>
+        <div style="white-space:pre-wrap;font-size:13px">${formatAI(text)}</div>
+        <button class="btn btn-sm" style="margin-top:8px" onclick="navigator.clipboard.writeText(window._lastDraft||'');alert('Copied')">Copy to clipboard</button>
+      </div>`;
+      window._lastDraft = text;
+    } catch(e) {
+      out.innerHTML = '<p class="text-muted">RFQ failed: ' + e.message + '</p>';
+    }
+  }
+
 </script>
 </body>
 </html>

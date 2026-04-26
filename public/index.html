@@ -681,6 +681,23 @@ function renderDetail() {
         <button class="btn btn-sm ml-auto" id="btn-john-detail" onclick="runJohnDetail(${t.id})">Get analysis →</button>
       </div>
       <div id="john-detail-out"></div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-success btn-sm" onclick="proceedTender(window.currentTid)">✓ Proceed</button>
+          <button class="btn btn-secondary btn-sm" onclick="declineTender(window.currentTid)">✗ Decline</button>
+          <button class="btn btn-primary btn-sm" onclick="draftBid(window.currentTid)">Draft Bid</button>
+          <button class="btn btn-warning btn-sm" onclick="generateRFQ(window.currentTid)">Generate RFQs</button>
+        </div>
+        <div id="draft-out" style="margin-top:16px"></div>
+        <div 
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-success btn-sm" onclick="proceedTender(currentTenderId)">✓ Proceed</button>
+          <button class="btn btn-secondary btn-sm" onclick="declineTender(currentTenderId)">✗ Decline</button>
+          <button class="btn btn-primary btn-sm" onclick="draftBid(currentTenderId)">Draft Bid</button>
+          <button class="btn btn-warning btn-sm" onclick="generateRFQ(currentTenderId)">Generate RFQs</button>
+        </div>
+        <div id="draft-out" style="margin-top:16px"></div>
+        <div REMOVE_THIS
     </div>
     <div style="margin-top:16px">
       <button class="btn btn-danger btn-sm" onclick="if(confirm('Delete this tender?')) deleteTender(${t.id})">Delete tender</button>
@@ -697,6 +714,7 @@ async function runJohnDetail(id) {
   const t = state.tenders.find(x => x.id === id);
   if (!t) return;
   document.getElementById('btn-john-detail').disabled = true;
+  window.currentTid = id;
   document.getElementById('john-detail-out').innerHTML = '<div class="flex items-center gap-8"><div class="spinner"></div><span class="text-sm text-muted">Agent John is analysing...</span></div>';
   const docID = t.supportDocument?.[0]?.supportDocumentID || null;
   const docName = t.supportDocument?.[0]?.fileName || null;

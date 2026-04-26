@@ -191,7 +191,7 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-app.post('/api/tenders/:id/decision', requireAuth, (req, res) => {
+app.post('/api/tenders/:id/decision', , (req, res) => {
   const db = readDB();
   const i = db.tenders.findIndex(t => String(t.id) === req.params.id);
   if (i === -1) return res.status(404).json({ error: 'Not found' });
